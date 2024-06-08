@@ -63,7 +63,7 @@ parser = CustomArgumentParser(
 
 
 def display_title():
-    title = pyfiglet.figlet_format("LinkedIn Scraper", font="chunky")
+    title = pyfiglet.figlet_format("LinkedIn Scraper", font="ogre")
     print(f"{Colors.YELLOW}{title}{Colors.ENDC}")
 
 display_title()
@@ -78,9 +78,9 @@ initial_args, _ = initial_parser.parse_known_args()
 parser = argparse.ArgumentParser(description="LinkedIn Scraper")
 parser.add_argument('-o', '--occupation', type=str, required=not initial_args.links, help=f"{Colors.GREEN}Enter the occupation(s){Colors.ENDC}")
 parser.add_argument('-loc', '--location', type=str, required=not initial_args.links, help=f"{Colors.GREEN}Enter the location{Colors.ENDC}")
-parser.add_argument('l', '--limit', type=int, required=False, default=1, help=f"{Colors.GREEN}Enter the number of page searches{Colors.ENDC}")
+parser.add_argument('-l', '--limit', type=int, required=False, default=1, help=f"{Colors.GREEN}Enter the number of page searches{Colors.ENDC}")
 parser.add_argument('--cc', 'create_cookies', type=bool, default=False, help=f"{Colors.GREEN}Create cookies{Colors.ENDC}")
-parser.add_argument('--links', type=bool, default=10, help=f"{Colors.GREEN}Use links file{Colors.ENDC}")
+parser.add_argument('--links', type=bool, default=1, help=f"{Colors.GREEN}Use links file{Colors.ENDC}")
 parser.add_argument('--vpn', type=str, help=f"{Colors.GREEN}Enter the location of VPN{Colors.ENDC}")
 
 args = parser.parse_args()
@@ -98,12 +98,14 @@ if args.cc:
     uu.run()
 
 if not args.cc:
+    # if args.vpn:
+    #     uu = use(occupation=args.occupation, location=args.location, count=args.limit, vpn=args.vpn)
+    #     uu.run()
+    #     print(f"{Colors.GREEN}VPN Location: {args.vpn}{Colors.ENDC}")
+    # else:
     uu = use(occupation=args.occupation, location=args.location, count=args.limit)
     uu.run()
 
 if args.links:
     uu = use(use_links=True)
     uu.run()
-
-if args.vpn:
-    print(f"{Colors.GREEN}VPN Location: {args.vpn}{Colors.ENDC}")
