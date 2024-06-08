@@ -3,52 +3,63 @@ from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
 import time
-
-def scroll_and_click(driver, num_scrolls):
-    for _ in range(num_scrolls):
-        # Scroll to the bottom of the page
-        prev_height = driver.execute_script("return document.body.scrollHeight")
-        while True:
-            driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-            time.sleep(2) # Allow time for the page to load new content
-            new_height = driver.execute_script("return document.body.scrollHeight")
-            if new_height == prev_height:
-                break
-            prev_height = new_height
-
-        # Click the "Show More" button
-        try:
-            show_more_button = driver.find_element(By.CSS_SELECTOR, '.T7sFge.sW9g3e.VknLRd')
-            show_more_button.click()
-            time.sleep(2) # Allow time for the new content to load
-        except Exception as e:
-            print(f"No 'Show More' button found: {e}")
-
-# URL for Google search
-url = "https://www.google.com/search?q=site:linkedin.com/in/ AND \"python developer\" AND \"London\""
-num_scrolls = 1 # Number of times to scroll and click the button
-linkedin_urls = set() # Use a set to store unique URLs
-
-options = Options()
-driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
-
-driver.get(url)
-
-# Scroll and click the button the specified number of times
-scroll_and_click(driver, num_scrolls)
+import os
 
 
-# Extract the LinkedIn URLs from the current page
-current_urls = driver.find_elements(By.XPATH, '//a[@jsname="UWckNb"]')    
-for url in current_urls:
-    href = url.get_attribute('href')
-    if href not in linkedin_urls: # Check if the URL is already in the set
-        linkedin_urls.add(href) # Add the URL to the set
+class SearchOnGoogle:
+    
+    def __init__(self, driver):
 
-# Convert the set back to a list if needed
-linkedin_urls = list(linkedin_urls)
+        self.driver = driver
+        self.linkedin_urls = set()
 
-# Print the extracted LinkedIn URLs
-print(linkedin_urls)
+
+    def scroll_and_click(self, num_scrolls):
+        
+        for _ in range(num_scrolls):
+            prev_height = self.driver.execute_script("return document.body.scrollHeight")
+            while True:
+                self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+                time.sleep(2)
+                new_height = self.driver.execute_script("return document.body.scrollHeight")
+                if new_height == prev_height:
+                    break
+                prev_height = new_height
+
+            try:
+                show_more_button = self.driver.find_element(By.CSS_SELECTOR, '.T7sFge.sW9g3e.VknLRd')
+                show_more_button.click()
+                time.sleep(2)
+            except Exception as e:
+                print(f"No 'Show More' button found: {e}")
+
+
+    def collect_urls(self):
+        current_urls = self.driver.find_elements(By.XPATH, '//a[@jsname="UWckNb"]')
+        for url in current_urls:
+            href = url.get_attribute('href')
+            if href not in self.linkedin_urls:
+                self.linkedin_urls.add(href)
+
+
+    def get_data(self):
+        return self.linkedin_urls
+
+
+    def save_urls(self):
+        if not os.path.exists('data'):
+            os.makedirs('data')
+        with open('data/linkedin_urls.txt', 'w') as file:
+            for url in self.linkedin_urls:
+                file.write(f'{url}\n')
+
+
+    def start(self, url, num_scrolls):
+        
+        self.driver.get(url)
+        self.scroll_and_click(num_scrolls)
+        self.collect_urls()
+        self.save_urls()
+        
+        print(f'Collected LinkedIn URLs: {len(self.linkedin_urls)}')

@@ -35,4 +35,3 @@ body = 'Your email body here.'
 for to_addr in recipients:
     email_content = create_email(subject, body, from_addr, to_addr)
     send_email(email_content, from_addr, to_addr, password)
-

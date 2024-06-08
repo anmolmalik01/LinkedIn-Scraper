@@ -1,23 +1,30 @@
+import csv
+import time
+import requests
+from bs4 import BeautifulSoup
+
+from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
-from bs4 import BeautifulSoup
-from selenium import webdriver
-import requests
-import time
-import csv
+
 
 class ProfileScraper:
     def __init__(self):
-        self.index = 1 # Initialize the index at 1
+        self.data = [] # Initialize an empty list to store scraped data
 
     def scrape_profile(self, driver, profile_url):
         """Scrape required fields from LinkedIn URL and save to CSV"""
-        driver.get(profile_url)
 
+        driver.get(profile_url)
+        wait = WebDriverWait(driver, 20)
+
+        # Click on Contact Info link
+        contact_locator = (By.ID, "top-card-text-details-contact-info")
+        wait.until(EC.visibility_of_element_located(contact_locator))
+        
         try:
             profile_name = driver.find_element(By.CSS_SELECTOR, "h1.text-heading-xlarge").get_attribute("innerText")
         except NoSuchElementException:
@@ -33,8 +40,9 @@ class ProfileScraper:
         except NoSuchElementException:
             profile_location = "Not Available"
 
-        # Click on Contact Info link
-        driver.find_element(By.ID, "top-card-text-details-contact-info").click()
+
+        contact_element = driver.find_element(*contact_locator)
+        contact_element.click()
 
         page_source = driver.page_source
         soup = BeautifulSoup(page_source, 'html.parser')
@@ -57,17 +65,19 @@ class ProfileScraper:
             email = email_link.replace('mailto:', '')
         else:
             email = 'Not Available'
-            
+
         print("=================== Extracted info ===================")
+        profile_data = {
+            "name": profile_name,
+            "title": profile_title,
+            "location": profile_location,
+            "website": website_link,
+            "phone_number": phone_number,
+            "email": email
+        }
+        self.data.append(profile_data)
 
-        with open( './data/data.txt', 'a', newline='', encoding='utf-8') as file:
-            writer = csv.writer(file)
-            # Write the header if the file is new
-            if file.tell() == 0:
-                writer.writerow(["Index", "Name", "Title", "Location", "Website", "Phone_number", "E-Mail"])
-            # Write the scraped data
-            writer.writerow([self.index, profile_name, profile_title, profile_location, website_link, phone_number, email])
 
-        print("=================== Pushed ===================")
-
-        self.index += 1 # Increment the index after each profile
+    def get_data(self):
+        """Return the scraped data"""
+        return self.data

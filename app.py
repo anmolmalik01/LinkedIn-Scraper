@@ -1,97 +1,109 @@
-from selenium import webdriver
-from webdriver_manager.chrome import ChromeDriverManager
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.by import By
-from bs4 import BeautifulSoup
-from utils.pprofile import ProfileScraper
-import time
-import csv
+from use import use
+import argparse
+import pyfiglet
 
 
-options = Options()
-# options.add_argument('--headless')
-# options.add_argument('--no-sandbox')
-# options.add_argument('--disable-dev-shm-usage')
-driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
-
-driver.get('https://www.linkedin.com/login')
-driver.find_element(By.ID, 'username').send_keys('garimamalik1011@gmail.com')
-driver.find_element(By.ID,'password').send_keys('Anmol@123')
-driver.find_element(By.CLASS_NAME, "btn__primary--large").click()
-print(" =================== Successful login =================== ")
-
-
-
-#*********** Search Result ***************#
-search_key = "hr gurgoan" # Enter your Search key here to find people
-key = search_key.split()
-keyword = ""
-for key1 in key:
-    keyword = keyword + str(key1).capitalize() +"%20"
-keyword = keyword.rstrip("%20")
-            
-global data
-data = []
-
-for no in range(1,2):
-    start = "&page={}".format(no) 
-    search_url = "https://www.linkedin.com/search/results/people/?keywords={}&origin=SUGGESTION{}".format(keyword,start)
-    driver.get(search_url)
-    print(search_url)
-    
-    # for scroll in range(2):
-    # driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-    
-    page_source = driver.page_source
-    soup = BeautifulSoup(page_source, 'html.parser')
-    time.sleep(2)
-
-    # Save page_source to a file
-    with open("./data/page_source.html", "w", encoding='utf-8') as file:
-        file.write(page_source)
-
-    # Save soup to a file
-    with open("./data/soup.html", "w", encoding='utf-8') as file:
-        file.write(str(soup))
+class Colors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKCYAN = '\033[96m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+    RED = '\033[31m'
+    GREEN = '\033[32m'
+    YELLOW = '\033[33m'
+    BLUE = '\033[34m'
+    MAGENTA = '\033[35m'
+    CYAN = '\033[36m'
+    WHITE = '\033[37m'
 
 
-    
+class CustomHelpFormatter(argparse.HelpFormatter):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
-#     ul_elements = soup.find_all('ul', class_='reusable-search__entity-result-list')
-#     ul_element = ul_elements[1]
-    
-#     if ul_elements:
-        
-#         li_elements = ul_element.find_all('li', class_='reusable-search__result-container')
+    def start_section(self, heading):
+        heading = f"{Colors.CYAN}{heading}{Colors.ENDC}"
+        super().start_section(heading)
+
+    def _format_usage(self, usage, actions, groups, prefix):
+        if prefix is None:
+            prefix = f"{Colors.GREEN}Usage: {Colors.ENDC}"
+        return super()._format_usage(usage, actions, groups, prefix)
+
+    def _format_action_invocation(self, action):
+        if not action.option_strings:
+            return f"{Colors.YELLOW}{action.dest}{Colors.ENDC}"
+        else:
+            parts = []
+            if action.nargs == 0:
+                parts.extend(action.option_strings)
+            else:
+                default = action.dest.upper()
+                args_string = self._format_args(action, default)
+                for option_string in action.option_strings:
+                    parts.append(f'{Colors.OKBLUE}{option_string}{Colors.ENDC} {args_string}')
+            return ', '.join(parts)
+
+class CustomArgumentParser(argparse.ArgumentParser):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def print_help(self, file=None):
+        self._print_message(self.format_help(), file)
+
+parser = CustomArgumentParser(
+    description=f"{Colors.YELLOW}LinkedIn Scraper{Colors.ENDC}",
+    formatter_class=CustomHelpFormatter
+)
 
 
-#         for li in li_elements:
-#             a_tag = li.find('a')
+def display_title():
+    title = pyfiglet.figlet_format("LinkedIn Scraper", font="chunky")
+    print(f"{Colors.YELLOW}{title}{Colors.ENDC}")
 
-#             if a_tag and a_tag.get('href'):
-#                 href = a_tag.get('href')
-#                 text_before_question_mark = href.split('?')[0]
-#                 data.append(text_before_question_mark)
-#                 # print(text_before_question_mark)
-#             else:
-#                 print("a tag not found within the span")
-#     else:
-#         print("ul not found.")
+display_title()
 
 
-# print(data)
+# First, parse the arguments to check the --links flag
+initial_parser = argparse.ArgumentParser(description="LinkedIn Scraper", add_help=False)
+initial_parser.add_argument('--links', type=bool, default=False, help=f"{Colors.GREEN}Use links file{Colors.ENDC}")
+initial_args, _ = initial_parser.parse_known_args()
 
-print("=================== data fetched ===================")
+# Set up the main parser with conditional requirements
+parser = argparse.ArgumentParser(description="LinkedIn Scraper")
+parser.add_argument('-o', '--occupation', type=str, required=not initial_args.links, help=f"{Colors.GREEN}Enter the occupation(s){Colors.ENDC}")
+parser.add_argument('-loc', '--location', type=str, required=not initial_args.links, help=f"{Colors.GREEN}Enter the location{Colors.ENDC}")
+parser.add_argument('l', '--limit', type=int, required=False, default=1, help=f"{Colors.GREEN}Enter the number of page searches{Colors.ENDC}")
+parser.add_argument('--cc', 'create_cookies', type=bool, default=False, help=f"{Colors.GREEN}Create cookies{Colors.ENDC}")
+parser.add_argument('--links', type=bool, default=10, help=f"{Colors.GREEN}Use links file{Colors.ENDC}")
+parser.add_argument('--vpn', type=str, help=f"{Colors.GREEN}Enter the location of VPN{Colors.ENDC}")
 
-# csv_file = './data/links.txt'
-# # Write data to CSV file
-# with open(csv_file, 'w', newline='') as file:
-#     writer = csv.writer(file)
-#     writer.writerows(data)
+args = parser.parse_args()
 
-print("========================= data pushed ====================")
+print(f"{Colors.GREEN}Occupations: {', '.join(args.occ)}{Colors.ENDC}")
+print(f"{Colors.GREEN}Location: {args.loc}{Colors.ENDC}")
+print(f"{Colors.GREEN}Page Search Limit: {args.limit}{Colors.ENDC}")
+print(f"{Colors.GREEN}Create Cookies: {args.cc}{Colors.ENDC}")
+print(f"{Colors.GREEN}Use Links File: {args.links}{Colors.ENDC}")
 
-# scraper = ProfileScraper()
-# for person in data:
-#     scraper.scrape_profile(driver, person)
+
+if args.cc:
+    print(f"{Colors.OKCYAN}Creating cookies...{Colors.ENDC}")
+    uu = use(create_cookies=True)
+    uu.run()
+
+if not args.cc:
+    uu = use(occupation=args.occupation, location=args.location, count=args.limit)
+    uu.run()
+
+if args.links:
+    uu = use(use_links=True)
+    uu.run()
+
+if args.vpn:
+    print(f"{Colors.GREEN}VPN Location: {args.vpn}{Colors.ENDC}")
