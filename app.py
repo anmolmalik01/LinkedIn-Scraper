@@ -79,7 +79,7 @@ parser = argparse.ArgumentParser(description="LinkedIn Scraper")
 parser.add_argument('-o', '--occupation', type=str, required=not initial_args.links, help=f"{Colors.GREEN}Enter the occupation(s){Colors.ENDC}")
 parser.add_argument('-loc', '--location', type=str, required=not initial_args.links, help=f"{Colors.GREEN}Enter the location{Colors.ENDC}")
 parser.add_argument('-l', '--limit', type=int, required=False, default=1, help=f"{Colors.GREEN}Enter the number of page searches{Colors.ENDC}")
-parser.add_argument('--cc', 'create_cookies', type=bool, default=False, help=f"{Colors.GREEN}Create cookies{Colors.ENDC}")
+parser.add_argument('--cc', '--create_cookies', type=bool, default=False, help=f"{Colors.GREEN}Create cookies{Colors.ENDC}")
 parser.add_argument('--links', type=bool, default=1, help=f"{Colors.GREEN}Use links file{Colors.ENDC}")
 parser.add_argument('--vpn', type=str, help=f"{Colors.GREEN}Enter the location of VPN{Colors.ENDC}")
 
