@@ -85,8 +85,10 @@ parser.add_argument('--vpn', type=str, help=f"{Colors.GREEN}Enter the location o
 
 args = parser.parse_args()
 
-print(f"{Colors.GREEN}Occupations: {', '.join(args.occ)}{Colors.ENDC}")
-print(f"{Colors.GREEN}Location: {args.loc}{Colors.ENDC}")
+if(args.occupation):
+    print(f"{Colors.GREEN}Occupations: {', '.join(args.occupation)}{Colors.ENDC}")
+if(args.location):
+    print(f"{Colors.GREEN}Location: {args.location}{Colors.ENDC}")
 print(f"{Colors.GREEN}Page Search Limit: {args.limit}{Colors.ENDC}")
 print(f"{Colors.GREEN}Create Cookies: {args.cc}{Colors.ENDC}")
 print(f"{Colors.GREEN}Use Links File: {args.links}{Colors.ENDC}")
@@ -98,14 +100,14 @@ if args.cc:
     uu.run()
 
 if not args.cc:
+    if args.links:
+        uu = use(use_links=True)
+        uu.run()
     # if args.vpn:
     #     uu = use(occupation=args.occupation, location=args.location, count=args.limit, vpn=args.vpn)
     #     uu.run()
     #     print(f"{Colors.GREEN}VPN Location: {args.vpn}{Colors.ENDC}")
     # else:
-    uu = use(occupation=args.occupation, location=args.location, count=args.limit)
-    uu.run()
-
-if args.links:
-    uu = use(use_links=True)
-    uu.run()
+    else:
+        uu = use(occupation=args.occupation, location=args.location, count=args.limit)
+        uu.run()

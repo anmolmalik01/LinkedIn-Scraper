@@ -7,6 +7,7 @@ from fake_useragent import UserAgent
 
 from selenium_stealth import stealth
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 
 from utils.linkedin_profile import ProfileScraper
@@ -43,9 +44,9 @@ class use():
                 time.sleep(30)
 
             # --------------------------------
+                links_list = []
+                
                 if self.use_links:
-                    links_list = []
-                    
                     with open('./data/linkedin_urls.txt', 'r') as file:
                         for line in file:
                             link = line.strip()
@@ -54,19 +55,24 @@ class use():
 
                 else:
                     num_scrolls = 1
-                    links = self.search_on_google(driver, self.occupation, self.location, num_scrolls)
+                    links_list = self.search_on_google(driver, self.occupation, self.location, num_scrolls)
                     print("-> Collected the names from google")
                     time.sleep(5)
 
 
                 for link in links_list:
-                    self.scrape(driver, url=link)
+                    try:
+                        self.scrape(driver, url=link)
+                    except Exception as e:
+                        print(f"Error occurred: {e}")
+                        break
                 print("SAVED")
 
         except Exception as e:
             print(f"## ERROR {e}")
 
         finally:
+            self.clean()
             self.quit(driver)
 
 
@@ -88,8 +94,6 @@ class use():
         options.add_argument("--disable-blink-features=AutomationControlled")
         options.add_argument("--disable-dev-shm-usage")
         options.add_argument("--disable-gpu")
-        options.add_argument("--no-sandbox")
-        options.add_argument("--no-first-run")
 
         # Set window size and position to prevent fingerprinting
         options.add_argument("--window-size=1366,768")
@@ -99,8 +103,8 @@ class use():
 
         # Set the user agent to a random one to prevent fingerprinting
         options.add_argument(f"--user-agent={self.get_random_user_agent()}")
-
-        driver = webdriver.Chrome(ChromeDriverManager().install(), options=options)
+        service = Service(ChromeDriverManager().install())
+        driver = webdriver.Chrome(service=service, options=options)        
         stealth(
             driver=driver,
             languages=["en-US", "en"],
@@ -177,8 +181,6 @@ class use():
 
         with open('./data/scraped.json', 'w') as file:
             json.dump(existing_data, file, indent=4)
-
-        self.clean()
 
 
     def clean(self):
